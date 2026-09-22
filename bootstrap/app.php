@@ -18,11 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+<<<<<<< HEAD
         $middleware->redirectUsersTo(fn (Request $request): string => route(
             $request->user()->can('branches.view') ? 'dashboard' : 'profile.edit',
             absolute: false,
         ));
 
+=======
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

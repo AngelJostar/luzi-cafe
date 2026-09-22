@@ -29,6 +29,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+<<<<<<< HEAD
         $user = $request->user();
         $permissions = collect([
             'branches.view',
@@ -51,6 +52,12 @@ class HandleInertiaRequests extends Middleware
                 'homeUrl' => $user
                     ? route($permissions['branches.view'] ? 'dashboard' : 'profile.edit', absolute: false)
                     : route('login', absolute: false),
+=======
+        return [
+            ...parent::share($request),
+            'auth' => [
+                'user' => $request->user(),
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
             ],
         ];
     }

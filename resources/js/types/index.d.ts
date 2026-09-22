@@ -10,8 +10,11 @@ export type PageProps<
 > = T & {
     auth: {
         user: User;
+<<<<<<< HEAD
         permissions: Record<string, boolean>;
         roles: string[];
         homeUrl: string;
+=======
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
     };
 };

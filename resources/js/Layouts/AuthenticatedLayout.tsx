@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import Dropdown from '@/Components/Dropdown';
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode } from 'react';
 
@@ -26,6 +30,7 @@ type NavigationItem = {
     icon: (props: IconProps) => ReactNode;
     href: string;
     active: boolean;
+<<<<<<< HEAD
     permission: string;
 };
 
@@ -62,11 +67,32 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
     const navigationItems = [
         ...availableModules,
         { label: 'Mi perfil', icon: UsersIcon, href: route('profile.edit'), active: route().current('profile.edit') },
+=======
+};
+
+export default function Authenticated({ header, children }: PropsWithChildren<{ header?: ReactNode }>) {
+    const user = usePage().props.auth.user;
+    const items: NavigationItem[] = [
+        { label: 'Dashboard', icon: ChartIcon, href: route('dashboard'), active: route().current('dashboard') },
+        { label: 'Ventas', icon: DollarIcon, href: route('sales.index'), active: route().current('sales.index') },
+        { label: 'Sucursales', icon: StoreIcon, href: route('branches.index'), active: route().current('branches.index') },
+        { label: 'Productos y menú', icon: CoffeeIcon, href: route('catalog.index'), active: route().current('catalog.index') },
+        { label: 'CMS e imágenes', icon: ImageIcon, href: route('cms.index'), active: route().current('cms.index') },
+        { label: 'Almacén general', icon: BoxesIcon, href: route('inventory.index'), active: route().current('inventory.index') },
+        { label: 'Pedidos', icon: CartIcon, href: route('orders.index'), active: route().current('orders.index') },
+        { label: 'Usuarios clientes', icon: UsersIcon, href: route('customers.index'), active: route().current('customers.index') },
+        { label: 'Notificaciones', icon: BellIcon, href: route('notifications.index'), active: route().current('notifications.index') },
+        { label: 'Reportes', icon: FileIcon, href: route('reports.index'), active: route().current('reports.index') },
+        { label: 'Configuración', icon: SettingsIcon, href: route('settings.index'), active: route().current('settings.index') },
+        { label: 'Auditoría', icon: ShieldIcon, href: route('audit.index'), active: route().current('audit.index') },
+        { label: 'Roles y permisos', icon: LockIcon, href: route('roles.index'), active: route().current('roles.index') },
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
     ];
 
     return (
         <div className="min-h-screen bg-[#f5f1e8] text-[#08294a]">
             <aside className="fixed inset-y-0 hidden w-72 flex-col bg-[#062947] p-4 text-white lg:flex">
+<<<<<<< HEAD
                 <Link href={homeUrl} className="mb-7 flex items-center gap-3 px-3">
                     <span className="rounded-full bg-[#ffc400] px-3 py-1 text-xs font-black text-[#062947]">{hasAdministrativeAccess ? 'PANEL' : 'CUENTA'}</span>
                     <span className="font-black tracking-widest text-[#1bb3bd]">LUZI</span>
@@ -78,6 +104,19 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                 </div>
                 <nav className="flex-1 space-y-1 overflow-y-auto">
                     {navigationItems.map((item) => {
+=======
+                <Link href={route('dashboard')} className="mb-7 flex items-center gap-3 px-3">
+                    <span className="rounded-full bg-[#ffc400] px-3 py-1 text-xs font-black text-[#062947]">ADMIN</span>
+                    <span className="font-black tracking-widest text-[#1bb3bd]">LUZI</span>
+                </Link>
+                <div className="mb-5 rounded-xl border border-[#244864] p-3">
+                    <strong className="block">Super Admin LUZI</strong>
+                    <span className="text-xs text-[#b9d1dd]">{user.name}</span>
+                    <button type="button" className="mt-3 w-full rounded-lg bg-[#ffc400] py-2 text-xs font-black text-[#062947]">◉ VISTA PREVIA</button>
+                </div>
+                <nav className="flex-1 space-y-1 overflow-y-auto">
+                    {items.map((item) => {
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
                         const Icon = item.icon;
 
                         return <Link key={item.label} href={item.href} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold ${item.active ? 'bg-[#ffc400] text-[#062947]' : 'text-white hover:bg-[#123e5d]'}`}>
@@ -85,6 +124,7 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                         </Link>;
                     })}
                 </nav>
+<<<<<<< HEAD
                 <Link
                     href={route('logout')}
                     method="post"
@@ -119,6 +159,21 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                     )}
                     {children}
                 </main>
+=======
+                <Dropdown>
+                    <Dropdown.Trigger><button type="button" className="mt-4 w-full rounded-lg border border-[#b9d1dd] py-2 text-sm font-bold">Cerrar sesión</button></Dropdown.Trigger>
+                    <Dropdown.Content>
+                        <Dropdown.Link href={route('profile.edit')}>Mi perfil</Dropdown.Link>
+                        <Dropdown.Link href={route('logout')} method="post" as="button">Confirmar cierre</Dropdown.Link>
+                    </Dropdown.Content>
+                </Dropdown>
+            </aside>
+            <div className="lg:pl-72">
+                <header className="flex min-h-20 items-center justify-between border-b border-[#e4ded2] bg-[#faf7f0] px-6 lg:px-8">
+                    {header}<button type="button" className="rounded-lg bg-white px-4 py-2 text-sm font-bold shadow-sm">⟳ Actualizar</button>
+                </header>
+                <main>{children}</main>
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
             </div>
         </div>
     );

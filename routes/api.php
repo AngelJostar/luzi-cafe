@@ -1,5 +1,6 @@
 <?php
 
+<<<<<<< HEAD
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CmsContentController;
@@ -7,6 +8,15 @@ use App\Http\Controllers\Api\V1\MobileAuthController;
 use App\Http\Controllers\Api\V1\MobileOnboardingController;
 use App\Http\Controllers\Api\V1\MobileOrderController;
 use App\Http\Controllers\Api\V1\MobileOrderHistoryController;
+=======
+use App\Http\Controllers\Api\V1\CatalogController;
+use App\Http\Controllers\Api\V1\BranchController;
+use App\Http\Controllers\Api\V1\CmsContentController;
+use App\Http\Controllers\Api\V1\MobileAuthController;
+use App\Http\Controllers\Api\V1\MobileOrderController;
+use App\Http\Controllers\Api\V1\MobileOrderHistoryController;
+use App\Http\Controllers\Api\V1\MobileOnboardingController;
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
 use App\Http\Controllers\Api\V1\MobileProfileController;
 use App\Http\Controllers\Api\V1\PromotionController;
 use App\Http\Controllers\Api\V1\PublicSettingsController;

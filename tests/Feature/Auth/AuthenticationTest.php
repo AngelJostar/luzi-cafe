@@ -4,9 +4,12 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+<<<<<<< HEAD
 use Inertia\Testing\AssertableInertia as Assert;
 use PHPUnit\Framework\Attributes\TestWith;
 use Spatie\Permission\Models\Permission;
+=======
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -24,12 +27,17 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
+<<<<<<< HEAD
         $response = $this->followingRedirects()->post('/login', [
+=======
+        $response = $this->post('/login', [
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
             'email' => $user->email,
             'password' => 'password',
         ]);
 
         $this->assertAuthenticated();
+<<<<<<< HEAD
         $response->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('Profile/Edit'));
     }
@@ -87,6 +95,9 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->get('/dashboard');
 
         $response->assertForbidden();
+=======
+        $response->assertRedirect(route('dashboard', absolute: false));
+>>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
