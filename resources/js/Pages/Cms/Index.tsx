@@ -1,0 +1,42 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, useForm } from '@inertiajs/react';
+import { FormEvent, ReactNode, useState } from 'react';
+
+type Content = { id: number; key: string; area: string; type: 'text' | 'image' | 'color'; label: string; value?: string | null; image_url?: string | null; alt_text?: string | null; status: 'draft' | 'published' | 'scheduled'; version: number; scheduled_at?: string | null };
+type ContentForm = { key: string; area: string; type: 'text' | 'image' | 'color'; label: string; value: string; image: File | null; alt_text: string; status: 'draft' | 'published' | 'scheduled'; scheduled_at: string };
+
+const blankContent: ContentForm = { key: '', area: 'Home', type: 'text', label: '', value: '', image: null, alt_text: '', status: 'draft', scheduled_at: '' };
+
+export default function Index({ contents }: { contents: Content[] }) {
+    const [selectedId, setSelectedId] = useState<number | null>(contents[0]?.id ?? null);
+    const [creating, setCreating] = useState(false);
+    const selected = contents.find(content => content.id === selectedId) ?? null;
+    const openNew = () => { setCreating(true); setSelectedId(null); };
+    const closeEditor = () => { setCreating(false); setSelectedId(contents[0]?.id ?? null); };
+
+    return <AuthenticatedLayout header={<div><p className="text-xs font-black tracking-wide text-[#099aa5]">LUZI　›　CMS E IMÁGENES</p><h1 className="text-2xl font-black">CMS e imágenes</h1></div>}>
+        <Head title="CMS e imágenes" />
+        <div className="grid gap-5 p-6 lg:p-8 xl:grid-cols-[minmax(0,1fr)_390px]">
+            <section className="rounded-xl border border-[#e5dfd4] bg-white p-4"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-black">CMS e imágenes</h2><button type="button" onClick={openNew} className="rounded-lg bg-[#099aa5] px-4 py-2 text-xs font-black text-white">＋ NUEVO CONTENIDO</button></div><div className="overflow-x-auto"><table className="w-full min-w-[760px] border-separate border-spacing-y-2 text-left text-sm"><thead className="text-xs font-black uppercase text-[#987e6b]"><tr><th className="px-3">Área　›</th><th className="px-3">Contenido　›</th><th className="px-3">Tipo　›</th><th className="px-3">Estado　›</th><th className="px-3">Versión　›</th></tr></thead><tbody>{contents.length ? contents.map(content => <tr key={content.id} onClick={() => { setSelectedId(content.id); setCreating(false); }} className={`cursor-pointer transition ${selectedId === content.id ? 'bg-[#f4fffe] ring-1 ring-[#099aa5]/35' : 'bg-[#fdfdfd] hover:bg-[#faf8f3]'}`}><td className="rounded-l-lg px-3 py-4 font-bold">{content.area}</td><td className="px-3 py-4"><strong>{content.label}</strong><small className="ml-2 text-xs text-[#987e6b]">{content.key}</small></td><td className="px-3 py-4 font-bold">{content.type}</td><td className="px-3 py-4"><Status status={content.status} /></td><td className="rounded-r-lg px-3 py-4 font-black">{content.version}</td></tr>) : <tr><td colSpan={5} className="p-14 text-center text-[#887e73]">Aún no hay contenido. Crea el título o banner de inicio para empezar.</td></tr>}</tbody></table></div></section>
+            <section className="h-fit rounded-xl border border-[#e5dfd4] bg-white p-4"><h2 className="mb-5 text-lg font-black">Editor</h2>{selected || creating ? <Editor key={selected?.id ?? 'new'} content={selected} onCancel={closeEditor} /> : <div className="rounded-lg border border-dashed border-[#d8d5ce] p-10 text-center text-sm font-bold text-[#887e73]">Selecciona un contenido para editarlo.</div>}</section>
+        </div>
+    </AuthenticatedLayout>;
+}
+
+function Editor({ content, onCancel }: { content: Content | null; onCancel: () => void }) {
+    const initial: ContentForm = content ? { key: content.key, area: content.area, type: content.type, label: content.label, value: content.value ?? '', image: null, alt_text: content.alt_text ?? '', status: content.status, scheduled_at: toLocalDateTime(content.scheduled_at) } : blankContent;
+    const form = useForm<ContentForm>(initial);
+    const isImage = form.data.type === 'image';
+    const submit = (event: FormEvent) => { event.preventDefault(); const options = { forceFormData: true, preserveScroll: true, onSuccess: onCancel }; if (content) form.put(route('cms.update', content.id), options); else form.post(route('cms.store'), options); };
+    const preview = form.data.image ? URL.createObjectURL(form.data.image) : content?.image_url;
+
+    return <form onSubmit={submit} className="grid gap-4"><Field label="Identificador técnico" error={form.errors.key}><input value={form.data.key} onChange={event => form.setData('key', event.target.value.toLowerCase().replace(/\s+/g, '-'))} placeholder="home-hero-title" required /></Field><Field label="Área" error={form.errors.area}><input value={form.data.area} onChange={event => form.setData('area', event.target.value)} placeholder="Home" required /></Field><Field label="Etiqueta" error={form.errors.label}><input value={form.data.label} onChange={event => form.setData('label', event.target.value)} placeholder="Título principal" required /></Field><Field label="Tipo" error={form.errors.type}><select value={form.data.type} onChange={event => form.setData('type', event.target.value as ContentForm['type'])}><option value="text">Texto</option><option value="image">Imagen</option><option value="color">Color</option></select></Field>
+        {isImage ? <><Field label={content?.image_url ? 'Reemplazar imagen (opcional)' : 'Imagen (máx. 5 MB)'} error={form.errors.image}><input type="file" accept="image/*" required={!content?.image_url} onChange={event => form.setData('image', event.target.files?.[0] ?? null)} /></Field>{preview && <img src={preview} alt={form.data.alt_text} className="max-h-44 w-full rounded-lg bg-[#fff8ec] object-contain p-2" />}</> : <Field label={form.data.type === 'color' ? 'Color' : 'Texto'} error={form.errors.value}><textarea value={form.data.value} onChange={event => form.setData('value', event.target.value)} rows={4} placeholder={form.data.type === 'color' ? '#FFC400' : 'Tu café, tu experiencia.'} required /></Field>}
+        <Field label="Texto alternativo" error={form.errors.alt_text}><input value={form.data.alt_text} onChange={event => form.setData('alt_text', event.target.value)} placeholder="Descripción para accesibilidad" /></Field><Field label="Estado" error={form.errors.status}><select value={form.data.status} onChange={event => form.setData('status', event.target.value as ContentForm['status'])}><option value="draft">Borrador</option><option value="published">Publicado</option><option value="scheduled">Programado</option></select></Field><Field label="Programar publicación" error={form.errors.scheduled_at}><input type="datetime-local" value={form.data.scheduled_at} onChange={event => form.setData('scheduled_at', event.target.value)} required={form.data.status === 'scheduled'} /></Field>
+        <div className="flex gap-2"><button type="submit" disabled={form.processing} className="flex-1 rounded-lg bg-[#099aa5] px-4 py-3 text-sm font-black text-white disabled:opacity-50">▣　{form.processing ? 'GUARDANDO...' : 'GUARDAR'}</button><button type="button" onClick={onCancel} className="rounded-lg border border-[#d8d5ce] px-3 text-sm font-black">×</button></div>
+    </form>;
+}
+
+function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) { return <label className="grid gap-1 text-xs font-bold uppercase text-[#987e6b]"><span>{label}</span><span className="[&>input]:w-full [&>input]:rounded-lg [&>input]:border [&>input]:border-[#d8d5ce] [&>input]:px-3 [&>input]:py-2.5 [&>select]:w-full [&>select]:rounded-lg [&>select]:border [&>select]:border-[#d8d5ce] [&>select]:px-3 [&>select]:py-2.5 [&>textarea]:w-full [&>textarea]:rounded-lg [&>textarea]:border [&>textarea]:border-[#d8d5ce] [&>textarea]:p-3">{children}</span>{error && <small className="normal-case text-red-600">{error}</small>}</label>; }
+function Status({ status }: { status: Content['status'] }) { const labels = { published: 'PUBLICADO', scheduled: 'PROGRAMADO', draft: 'BORRADOR' }; return <span className={status === 'published' ? 'font-black text-[#2aad48]' : 'font-black text-[#b27a08]'}>{labels[status]}</span>; }
+function toLocalDateTime(value?: string | null): string { return value ? value.slice(0, 16) : ''; }
