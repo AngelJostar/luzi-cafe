@@ -37,6 +37,7 @@ class StoreProductRequest extends FormRequest
             'barcode' => ['nullable', 'string', 'max:80', 'unique:products,barcode'],
             'internal_code' => ['nullable', 'string', 'max:80', 'unique:products,internal_code'],
             'image_path' => ['nullable', 'string', 'max:2048'],
+            'tags' => ['nullable', 'string', 'max:500'],
             'estimated_prep_minutes' => ['nullable', 'integer', 'min:0', 'max:240'],
             'max_per_order' => ['nullable', 'integer', 'min:1', 'max:999'],
             'status' => ['required', 'in:active,inactive,sold_out,seasonal'],

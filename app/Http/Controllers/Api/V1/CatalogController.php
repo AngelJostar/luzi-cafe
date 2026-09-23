@@ -19,7 +19,12 @@ class CatalogController extends Controller
             ->where('is_active', true)
             ->when($branchId, fn ($query) => $query->whereHas('branches', fn ($branchQuery) => $branchQuery->where('branches.id', $branchId)->where('is_available', true)))
             ->orderBy('display_order')
-            ->get();
+            ->get()
+            ->each(function (Product $product) use ($request): void {
+                if ($product->image_path && str_starts_with($product->image_path, '/')) {
+                    $product->image_path = $request->getSchemeAndHttpHost().$product->image_path;
+                }
+            });
 
         return response()->json([
             'categories' => Category::query()->where('is_active', true)->orderBy('display_order')->get(),

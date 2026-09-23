@@ -17,17 +17,12 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleManagementController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SettingController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return auth()->check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
 });
 
 Route::get('/dashboard', AdminDashboardController::class)
@@ -75,6 +70,7 @@ Route::post('/catalogo/productos', [CatalogController::class, 'storeProduct'])->
 Route::put('/catalogo/categorias/orden', [CatalogController::class, 'updateCategoryOrder'])->middleware(['auth', 'verified'])->name('catalog.categories.order');
 Route::put('/catalogo/categorias/productos/orden', [CatalogController::class, 'updateProductOrder'])->middleware(['auth', 'verified'])->name('catalog.products.order');
 Route::put('/catalogo/productos/{product}/categorias', [CatalogController::class, 'updateProductCategories'])->middleware(['auth', 'verified'])->name('catalog.products.categories.update');
+Route::put('/catalogo/productos/{product}/etiquetas', [CatalogController::class, 'updateProductTags'])->middleware(['auth', 'verified'])->name('catalog.products.tags.update');
 Route::put('/catalogo/productos/{product}', [CatalogController::class, 'update'])->middleware(['auth', 'verified'])->name('catalog.products.update');
 Route::post('/catalogo/productos/{product}/duplicar', [CatalogController::class, 'duplicate'])->middleware(['auth', 'verified'])->name('catalog.products.duplicate');
 Route::delete('/catalogo/productos/{product}', [CatalogController::class, 'destroy'])->middleware(['auth', 'verified'])->name('catalog.products.destroy');

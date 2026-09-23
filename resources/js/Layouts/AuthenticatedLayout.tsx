@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-import Dropdown from '@/Components/Dropdown';
->>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode } from 'react';
 
@@ -30,7 +26,6 @@ type NavigationItem = {
     icon: (props: IconProps) => ReactNode;
     href: string;
     active: boolean;
-<<<<<<< HEAD
     permission: string;
 };
 
@@ -67,7 +62,7 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
     const navigationItems = [
         ...availableModules,
         { label: 'Mi perfil', icon: UsersIcon, href: route('profile.edit'), active: route().current('profile.edit') },
-=======
+/*
 };
 
 export default function Authenticated({ header, children }: PropsWithChildren<{ header?: ReactNode }>) {
@@ -86,13 +81,12 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
         { label: 'Configuración', icon: SettingsIcon, href: route('settings.index'), active: route().current('settings.index') },
         { label: 'Auditoría', icon: ShieldIcon, href: route('audit.index'), active: route().current('audit.index') },
         { label: 'Roles y permisos', icon: LockIcon, href: route('roles.index'), active: route().current('roles.index') },
->>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
+*/
     ];
 
     return (
         <div className="min-h-screen bg-[#f5f1e8] text-[#08294a]">
             <aside className="fixed inset-y-0 hidden w-72 flex-col bg-[#062947] p-4 text-white lg:flex">
-<<<<<<< HEAD
                 <Link href={homeUrl} className="mb-7 flex items-center gap-3 px-3">
                     <span className="rounded-full bg-[#ffc400] px-3 py-1 text-xs font-black text-[#062947]">{hasAdministrativeAccess ? 'PANEL' : 'CUENTA'}</span>
                     <span className="font-black tracking-widest text-[#1bb3bd]">LUZI</span>
@@ -104,7 +98,7 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                 </div>
                 <nav className="flex-1 space-y-1 overflow-y-auto">
                     {navigationItems.map((item) => {
-=======
+/*
                 <Link href={route('dashboard')} className="mb-7 flex items-center gap-3 px-3">
                     <span className="rounded-full bg-[#ffc400] px-3 py-1 text-xs font-black text-[#062947]">ADMIN</span>
                     <span className="font-black tracking-widest text-[#1bb3bd]">LUZI</span>
@@ -116,7 +110,7 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                 </div>
                 <nav className="flex-1 space-y-1 overflow-y-auto">
                     {items.map((item) => {
->>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
+*/
                         const Icon = item.icon;
 
                         return <Link key={item.label} href={item.href} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold ${item.active ? 'bg-[#ffc400] text-[#062947]' : 'text-white hover:bg-[#123e5d]'}`}>
@@ -124,7 +118,6 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                         </Link>;
                     })}
                 </nav>
-<<<<<<< HEAD
                 <Link
                     href={route('logout')}
                     method="post"
@@ -159,7 +152,7 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                     )}
                     {children}
                 </main>
-=======
+{/*
                 <Dropdown>
                     <Dropdown.Trigger><button type="button" className="mt-4 w-full rounded-lg border border-[#b9d1dd] py-2 text-sm font-bold">Cerrar sesión</button></Dropdown.Trigger>
                     <Dropdown.Content>
@@ -173,7 +166,7 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                     {header}<button type="button" className="rounded-lg bg-white px-4 py-2 text-sm font-bold shadow-sm">⟳ Actualizar</button>
                 </header>
                 <main>{children}</main>
->>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
+*/}
             </div>
         </div>
     );

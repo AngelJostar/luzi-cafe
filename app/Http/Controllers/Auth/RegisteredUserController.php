@@ -47,10 +47,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-<<<<<<< HEAD
         return redirect(route('profile.edit', absolute: false));
-=======
-        return redirect(route('dashboard', absolute: false));
->>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
     }
 }

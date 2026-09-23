@@ -27,7 +27,7 @@ class CatalogController extends Controller
             'branches' => Branch::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'products' => Product::query()->with(['category:id,name', 'categories:id,name', 'branches:id,name'])
                 ->orderBy('display_order')
-                ->get(['id', 'category_id', 'name', 'short_name', 'slug', 'sku', 'description', 'commercial_description', 'base_price', 'promo_price', 'estimated_cost', 'status', 'image_path', 'estimated_prep_minutes', 'max_per_order', 'is_active', 'display_order']),
+                ->get(['id', 'category_id', 'name', 'short_name', 'slug', 'sku', 'description', 'commercial_description', 'base_price', 'promo_price', 'estimated_cost', 'status', 'image_path', 'tags', 'estimated_prep_minutes', 'max_per_order', 'is_active', 'display_order']),
         ]);
     }
 
@@ -119,6 +119,24 @@ class CatalogController extends Controller
         return back();
     }
 
+    public function updateProductTags(Request $request, Product $product): RedirectResponse
+    {
+        abort_unless($request->user()?->can('products.manage'), 403);
+
+        $tags = collect(explode(',', (string) $request->validate([
+            'tags' => ['nullable', 'string', 'max:500'],
+        ])['tags']))
+            ->map(fn (string $tag) => Str::slug(trim($tag)))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $product->update(['tags' => $tags]);
+
+        return back();
+    }
+
     /** @param array<string, mixed> $data */
     private function productAttributes(array $data, int $displayOrder, ?Product $product = null): array
     {
@@ -137,6 +155,7 @@ class CatalogController extends Controller
             'slug' => $slug, 'sku' => ($data['sku'] ?? null) ?: null, 'barcode' => ($data['barcode'] ?? null) ?: null,
             'internal_code' => ($data['internal_code'] ?? null) ?: null, 'base_price' => $data['base_price'], 'promo_price' => $data['promo_price'] ?? null,
             'estimated_cost' => $data['estimated_cost'] ?? 0, 'status' => $data['status'], 'image_path' => $data['image_path'] ?? null,
+            'tags' => collect(explode(',', $data['tags'] ?? ''))->map(fn (string $tag) => Str::slug(trim($tag)))->filter()->unique()->values()->all(),
             'estimated_prep_minutes' => $data['estimated_prep_minutes'] ?? 8, 'max_per_order' => $data['max_per_order'] ?? 12,
             'is_active' => $data['status'] === 'active', 'display_order' => $displayOrder,
         ];

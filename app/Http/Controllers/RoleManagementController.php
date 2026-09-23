@@ -31,7 +31,7 @@ class RoleManagementController extends Controller
             return back()->withErrors(['role' => 'No puedes retirar tu propio rol de superadministrador.']);
         }
 
-        $user->syncRoles([$request->string('role')]);
+        $user->syncRoles([$request->string('role')->toString()]);
 
         return to_route('roles.index')->with('success', 'Rol actualizado correctamente.');
     }

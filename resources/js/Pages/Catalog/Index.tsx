@@ -1,76 +1,1057 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Form, Head, router, useForm } from '@inertiajs/react';
-import { FormEvent, ReactNode, useMemo, useState } from 'react';
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Form, Head, router, useForm } from "@inertiajs/react";
+import { FormEvent, ReactNode, useMemo, useState } from "react";
 
 type Category = { id: number; name: string; slug: string; is_active: boolean };
 type Branch = { id: number; name: string; pivot?: { is_available: boolean } };
-type Product = { id: number; category_id: number; name: string; short_name?: string | null; slug: string; sku?: string | null; description?: string | null; commercial_description?: string | null; base_price: string; promo_price?: string | null; estimated_cost?: string | null; status: string; image_path?: string | null; estimated_prep_minutes?: number; max_per_order?: number; categories: Category[]; branches: Branch[] };
-type Props = { categories: Category[]; products: Product[]; branches: Branch[] };
-type ProductForm = { name: string; short_name: string; description: string; commercial_description: string; category_id: string; category_ids: number[]; base_price: string; promo_price: string; estimated_cost: string; status: string; sku: string; barcode: string; internal_code: string; image_path: string; estimated_prep_minutes: string; max_per_order: string; branch_ids: number[] };
+type Product = {
+    id: number;
+    category_id: number;
+    name: string;
+    short_name?: string | null;
+    slug: string;
+    sku?: string | null;
+    description?: string | null;
+    commercial_description?: string | null;
+    base_price: string;
+    promo_price?: string | null;
+    estimated_cost?: string | null;
+    status: string;
+    image_path?: string | null;
+    tags?: string[];
+    estimated_prep_minutes?: number;
+    max_per_order?: number;
+    categories: Category[];
+    branches: Branch[];
+};
+type Props = {
+    categories: Category[];
+    products: Product[];
+    branches: Branch[];
+};
+type ProductForm = {
+    name: string;
+    short_name: string;
+    description: string;
+    commercial_description: string;
+    category_id: string;
+    category_ids: number[];
+    base_price: string;
+    promo_price: string;
+    estimated_cost: string;
+    status: string;
+    sku: string;
+    barcode: string;
+    internal_code: string;
+    image_path: string;
+    tags: string;
+    estimated_prep_minutes: string;
+    max_per_order: string;
+    branch_ids: number[];
+};
 
-const blankProduct = (categories: Category[], branches: Branch[]): ProductForm => ({ name: '', short_name: '', description: '', commercial_description: '', category_id: String(categories[0]?.id ?? ''), category_ids: categories[0] ? [categories[0].id] : [], base_price: '', promo_price: '', estimated_cost: '0', status: 'active', sku: '', barcode: '', internal_code: '', image_path: '', estimated_prep_minutes: '8', max_per_order: '12', branch_ids: branches.map(branch => branch.id) });
+const blankProduct = (
+    categories: Category[],
+    branches: Branch[],
+): ProductForm => ({
+    name: "",
+    short_name: "",
+    description: "",
+    commercial_description: "",
+    category_id: String(categories[0]?.id ?? ""),
+    category_ids: categories[0] ? [categories[0].id] : [],
+    base_price: "",
+    promo_price: "",
+    estimated_cost: "0",
+    status: "active",
+    sku: "",
+    barcode: "",
+    internal_code: "",
+    image_path: "",
+    tags: "",
+    estimated_prep_minutes: "8",
+    max_per_order: "12",
+    branch_ids: branches.map((branch) => branch.id),
+});
 
 export default function Index({ categories, products, branches }: Props) {
-    const [selectedCategoryId, setSelectedCategoryId] = useState(categories[0]?.id ?? 0);
-    const [query, setQuery] = useState('');
-    const [categorySearch, setCategorySearch] = useState('');
+    const [selectedCategoryId, setSelectedCategoryId] = useState(
+        categories[0]?.id ?? 0,
+    );
+    const [query, setQuery] = useState("");
+    const [categorySearch, setCategorySearch] = useState("");
     const [showProductForm, setShowProductForm] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-    const selectedCategory = categories.find(category => category.id === selectedCategoryId);
-    const categoryProducts = useMemo(() => products.filter(product => product.categories.some(category => category.id === selectedCategoryId)), [products, selectedCategoryId]);
-    const pickerProducts = useMemo(() => products.filter(product => `${product.name} ${product.sku ?? ''}`.toLowerCase().includes(categorySearch.toLowerCase())), [products, categorySearch]);
-    const filteredProducts = useMemo(() => { const search = query.trim().toLowerCase(); return search ? products.filter(product => [product.name, product.sku, product.status, ...product.categories.map(category => category.name), ...product.branches.map(branch => branch.name)].join(' ').toLowerCase().includes(search)) : products; }, [products, query]);
+    const selectedCategory = categories.find(
+        (category) => category.id === selectedCategoryId,
+    );
+    const categoryProducts = useMemo(
+        () =>
+            products.filter((product) =>
+                product.categories.some(
+                    (category) => category.id === selectedCategoryId,
+                ),
+            ),
+        [products, selectedCategoryId],
+    );
+    const pickerProducts = useMemo(
+        () =>
+            products.filter((product) =>
+                `${product.name} ${product.sku ?? ""}`
+                    .toLowerCase()
+                    .includes(categorySearch.toLowerCase()),
+            ),
+        [products, categorySearch],
+    );
+    const filteredProducts = useMemo(() => {
+        const search = query.trim().toLowerCase();
+        return search
+            ? products.filter((product) =>
+                  [
+                      product.name,
+                      product.sku,
+                      product.status,
+                      ...product.categories.map((category) => category.name),
+                      ...product.branches.map((branch) => branch.name),
+                  ]
+                      .join(" ")
+                      .toLowerCase()
+                      .includes(search),
+              )
+            : products;
+    }, [products, query]);
 
     const moveCategory = (categoryId: number, direction: -1 | 1) => {
-        const index = categories.findIndex(category => category.id === categoryId); const destination = index + direction;
+        const index = categories.findIndex(
+            (category) => category.id === categoryId,
+        );
+        const destination = index + direction;
         if (destination < 0 || destination >= categories.length) return;
-        const ordered = [...categories]; [ordered[index], ordered[destination]] = [ordered[destination], ordered[index]];
-        router.put(route('catalog.categories.order'), { ids: ordered.map(category => category.id) }, { preserveScroll: true });
+        const ordered = [...categories];
+        [ordered[index], ordered[destination]] = [
+            ordered[destination],
+            ordered[index],
+        ];
+        router.put(
+            route("catalog.categories.order"),
+            { ids: ordered.map((category) => category.id) },
+            { preserveScroll: true },
+        );
     };
     const moveProduct = (productId: number, direction: -1 | 1) => {
         if (!selectedCategory) return;
-        const index = categoryProducts.findIndex(product => product.id === productId); const destination = index + direction;
+        const index = categoryProducts.findIndex(
+            (product) => product.id === productId,
+        );
+        const destination = index + direction;
         if (destination < 0 || destination >= categoryProducts.length) return;
-        const ordered = [...categoryProducts]; [ordered[index], ordered[destination]] = [ordered[destination], ordered[index]];
-        router.put(route('catalog.products.order'), { category_id: selectedCategory.id, ids: ordered.map(product => product.id) }, { preserveScroll: true });
+        const ordered = [...categoryProducts];
+        [ordered[index], ordered[destination]] = [
+            ordered[destination],
+            ordered[index],
+        ];
+        router.put(
+            route("catalog.products.order"),
+            {
+                category_id: selectedCategory.id,
+                ids: ordered.map((product) => product.id),
+            },
+            { preserveScroll: true },
+        );
     };
     const setCategoryMembership = (product: Product, included: boolean) => {
         if (!selectedCategory) return;
-        const ids = new Set(product.categories.map(category => category.id));
-        if (included) ids.add(selectedCategory.id); else ids.delete(selectedCategory.id);
-        if (!ids.size) { window.alert('Un producto debe conservar al menos una categoría.'); return; }
+        const ids = new Set(product.categories.map((category) => category.id));
+        if (included) ids.add(selectedCategory.id);
+        else ids.delete(selectedCategory.id);
+        if (!ids.size) {
+            window.alert("Un producto debe conservar al menos una categoría.");
+            return;
+        }
         const categoryIds = [...ids];
-        router.put(route('catalog.products.categories.update', product.id), { category_id: categoryIds[0], category_ids: categoryIds }, { preserveScroll: true });
+        router.put(
+            route("catalog.products.categories.update", product.id),
+            { category_id: categoryIds[0], category_ids: categoryIds },
+            { preserveScroll: true },
+        );
     };
     const exportProducts = () => {
-        const rows = [['Producto', 'SKU', 'Categorías', 'Precio', 'Sucursales activas', 'Estado'], ...filteredProducts.map(product => [product.name, product.sku ?? '', product.categories.map(category => category.name).join(', '), product.base_price, product.branches.filter(branch => branch.pivot?.is_available).length, product.status])];
-        const csv = rows.map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(',')).join('\n'); const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = 'luzi-productos.csv'; link.click(); URL.revokeObjectURL(link.href);
+        const rows = [
+            [
+                "Producto",
+                "SKU",
+                "Categorías",
+                "Precio",
+                "Sucursales activas",
+                "Estado",
+            ],
+            ...filteredProducts.map((product) => [
+                product.name,
+                product.sku ?? "",
+                product.categories.map((category) => category.name).join(", "),
+                product.base_price,
+                product.branches.filter((branch) => branch.pivot?.is_available)
+                    .length,
+                product.status,
+            ]),
+        ];
+        const csv = rows
+            .map((row) =>
+                row
+                    .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+                    .join(","),
+            )
+            .join("\n");
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(
+            new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+        );
+        link.download = "luzi-productos.csv";
+        link.click();
+        URL.revokeObjectURL(link.href);
     };
-    const closeProductForm = () => { setShowProductForm(false); setEditingProduct(null); };
+    const closeProductForm = () => {
+        setShowProductForm(false);
+        setEditingProduct(null);
+    };
 
-    return <AuthenticatedLayout header={<div><p className="text-xs font-black tracking-wide text-[#099aa5]">LUZI　›　PRODUCTOS Y MENU</p><h1 className="text-2xl font-black">Productos y menú</h1></div>}>
-        <Head title="Productos y menú" />
-        <div className="space-y-5 p-6 lg:p-8">
-            <section className="rounded-xl border border-[#e5dfd4] bg-white p-4"><h2 className="mb-5 text-lg font-black">Orden de categorías y productos</h2><div className="grid gap-5 xl:grid-cols-[280px_minmax(360px,1fr)_minmax(300px,0.95fr)]">
-                <section><div className="mb-3 flex items-center justify-between"><p className="text-xs font-black uppercase text-[#987e6b]">Categorías visibles</p><span className="rounded-full bg-[#fff0c7] px-3 py-1 text-sm font-black">{categories.length}</span></div><div className="space-y-2">{categories.map((category, index) => <div key={category.id} className={`grid min-h-14 grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg border bg-white px-3 py-2 shadow-sm ${category.id === selectedCategoryId ? 'border-[#099aa5]' : 'border-[#e6e2db]'}`}><span className="text-[#71808b]">⋮⋮</span><button type="button" onClick={() => setSelectedCategoryId(category.id)} className="min-w-0 text-left"><strong className="block truncate text-sm">{index + 1}. {category.name}</strong><small className="block font-bold text-[#7c847f]">{products.filter(product => product.categories.some(item => item.id === category.id)).length} productos</small></button><span className="flex gap-1"><IconButton label="↑" title="Subir categoría" onClick={() => moveCategory(category.id, -1)} /><IconButton label="↓" title="Bajar categoría" onClick={() => moveCategory(category.id, 1)} /></span></div>)}</div></section>
-                <section className="min-w-0">{selectedCategory ? <><div className="mb-3 flex items-center justify-between"><div><p className="text-xs font-black uppercase text-[#099aa5]">Categoría seleccionada</p><h3 className="text-xl font-black">{selectedCategory.name}</h3></div><span className="text-xs font-black text-[#2aad48]">{categoryProducts.length} PRODUCTOS</span></div><div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">{categoryProducts.length ? categoryProducts.map((product, index) => <div key={product.id} className="grid min-h-16 grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg border border-[#e6e2db] bg-white px-3 py-2 shadow-sm"><span className="text-[#71808b]">⋮⋮</span><span className="min-w-0"><strong className="block truncate text-sm">{index + 1}. {product.name}</strong><small className="block font-bold text-[#7c847f]">{product.sku || product.slug}</small></span><span className="flex gap-1"><IconButton label="↑" title="Subir producto" onClick={() => moveProduct(product.id, -1)} /><IconButton label="↓" title="Bajar producto" onClick={() => moveProduct(product.id, 1)} /><IconButton label="×" title="Quitar de categoría" danger onClick={() => setCategoryMembership(product, false)} /></span></div>) : <Empty text="Categoría sin productos asignados" />}</div></> : <Empty text="Crea una categoría para organizar productos" />}</section>
-                <section className="min-w-0"><label className="mb-3 flex h-11 items-center gap-2 rounded-lg border border-[#dce2e3] px-3 text-sm"><span>⌕</span><input value={categorySearch} onChange={event => setCategorySearch(event.target.value)} placeholder="Buscar para agregar o quitar" className="w-full border-0 p-0 text-sm outline-none ring-0" /></label><div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">{pickerProducts.map(product => { const included = product.categories.some(category => category.id === selectedCategoryId); return <label key={product.id} className={`grid min-h-14 grid-cols-[1fr_auto] items-center gap-3 rounded-lg border bg-white px-3 py-2 shadow-sm ${included ? 'border-[#099aa5]/50' : 'border-[#e6e2db]'}`}><span className="min-w-0"><strong className="block truncate text-sm">{product.name}</strong><small className="block truncate font-bold text-[#7c847f]">{product.categories.map(category => category.name).join(', ') || 'Sin categoría'}</small></span><input aria-label={`Asignar ${product.name}`} type="checkbox" checked={included} onChange={event => setCategoryMembership(product, event.target.checked)} className="h-5 w-5 accent-[#099aa5]" /></label>; })}</div></section>
-            </div></section>
-            <section className="rounded-xl border border-[#e5dfd4] bg-white p-4"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-black">Menú y productos</h2><div className="flex gap-2"><button type="button" onClick={exportProducts} className="rounded-lg bg-[#099aa5] px-4 py-2 text-xs font-black text-white">⇩　EXPORTAR</button><button type="button" onClick={() => setShowProductForm(true)} className="rounded-lg bg-[#099aa5] px-4 py-2 text-xs font-black text-white">＋　PRODUCTO</button></div></div><div className="mb-3 grid gap-3 lg:grid-cols-[1fr_auto]"><label className="flex h-11 items-center gap-2 rounded-lg border border-[#dce2e3] px-3 text-sm"><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar producto, SKU, categoría, sucursal o estado" className="w-full border-0 p-0 text-sm outline-none ring-0" /></label><Form action={route('catalog.categories.store')} method="post" resetOnSuccess className="flex gap-2">{({ errors, processing }) => <><input name="name" required placeholder="Nueva categoría" className="min-w-44 rounded-lg border-[#dce2e3] text-sm" /><button disabled={processing} className="rounded-lg bg-[#099aa5] px-4 text-xs font-black text-white">AGREGAR</button>{errors.name && <small className="text-red-600">{errors.name}</small>}</>}</Form></div><div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#fdfcf9] px-3 py-2 text-xs font-black text-[#687873]"><span>{filteredProducts.length} productos visibles con los filtros actuales</span><button type="button" onClick={() => setQuery('')} className="rounded-lg bg-[#fff8ec] px-3 py-2 text-[#099aa5]">LIMPIAR FILTROS</button></div><div className="overflow-x-auto"><table className="w-full min-w-[860px] border-separate border-spacing-y-2 text-left text-sm"><thead className="text-xs font-black text-[#987e6b]"><tr><th className="px-3">PRODUCTO　›</th><th className="px-3">CATEGORÍAS　›</th><th className="px-3">PRECIO　›</th><th className="px-3">SUCURSAL　›</th><th className="px-3">ESTADO　›</th><th className="px-3">ACCIONES　›</th></tr></thead><tbody>{filteredProducts.map(product => <tr key={product.id} className="bg-[#fdfdfd] shadow-sm"><td className="rounded-l-lg px-3 py-3"><div className="flex items-center gap-3"><span className="grid h-12 w-12 place-items-center overflow-hidden rounded-lg bg-[#fff8ec] text-lg">{product.image_path ? <img src={product.image_path} alt="" className="h-full w-full object-cover" /> : '☕'}</span><span><strong className="block">{product.name}</strong><small className="font-bold text-[#987e6b]">{product.sku || product.slug}</small></span></div></td><td className="px-3 font-bold">{product.categories.map(category => category.name).join(', ')}</td><td className="px-3 font-black">{money(product.base_price)}</td><td className="px-3 font-bold">{product.branches.filter(branch => branch.pivot?.is_available).length} activas</td><td className="px-3"><span className={product.status === 'active' ? 'font-black text-[#2aad48]' : 'font-black text-[#e6474f]'}>{statusLabel(product.status)}</span></td><td className="rounded-r-lg px-3"><div className="flex gap-2"><IconButton label="✎" title="Editar" onClick={() => { setEditingProduct(product); setShowProductForm(true); }} /><IconButton label="＋" title="Duplicar" onClick={() => router.post(route('catalog.products.duplicate', product.id), {}, { preserveScroll: true })} /><IconButton label="♧" title="Eliminar" danger onClick={() => { if (window.confirm(`¿Desactivar ${product.name}?`)) router.delete(route('catalog.products.destroy', product.id), { preserveScroll: true }); }} /></div></td></tr>)}</tbody></table></div></section>
-        </div>{showProductForm && <ProductModal categories={categories} branches={branches} product={editingProduct} onClose={closeProductForm} />}
-    </AuthenticatedLayout>;
+    return (
+        <AuthenticatedLayout
+            header={
+                <div>
+                    <p className="text-xs font-black tracking-wide text-[#099aa5]">
+                        LUZI　›　PRODUCTOS Y MENU
+                    </p>
+                    <h1 className="text-2xl font-black">Productos y menú</h1>
+                </div>
+            }
+        >
+            <Head title="Productos y menú" />
+            <div className="space-y-5 p-6 lg:p-8">
+                <section className="rounded-xl border border-[#e5dfd4] bg-white p-4">
+                    <h2 className="mb-5 text-lg font-black">
+                        Orden de categorías y productos
+                    </h2>
+                    <div className="grid gap-5 xl:grid-cols-[280px_minmax(360px,1fr)_minmax(300px,0.95fr)]">
+                        <section>
+                            <div className="mb-3 flex items-center justify-between">
+                                <p className="text-xs font-black uppercase text-[#987e6b]">
+                                    Categorías visibles
+                                </p>
+                                <span className="rounded-full bg-[#fff0c7] px-3 py-1 text-sm font-black">
+                                    {categories.length}
+                                </span>
+                            </div>
+                            <div className="space-y-2">
+                                {categories.map((category, index) => (
+                                    <div
+                                        key={category.id}
+                                        className={`grid min-h-14 grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg border bg-white px-3 py-2 shadow-sm ${category.id === selectedCategoryId ? "border-[#099aa5]" : "border-[#e6e2db]"}`}
+                                    >
+                                        <span className="text-[#71808b]">
+                                            ⋮⋮
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setSelectedCategoryId(
+                                                    category.id,
+                                                )
+                                            }
+                                            className="min-w-0 text-left"
+                                        >
+                                            <strong className="block truncate text-sm">
+                                                {index + 1}. {category.name}
+                                            </strong>
+                                            <small className="block font-bold text-[#7c847f]">
+                                                {
+                                                    products.filter((product) =>
+                                                        product.categories.some(
+                                                            (item) =>
+                                                                item.id ===
+                                                                category.id,
+                                                        ),
+                                                    ).length
+                                                }{" "}
+                                                productos
+                                            </small>
+                                        </button>
+                                        <span className="flex gap-1">
+                                            <IconButton
+                                                label="↑"
+                                                title="Subir categoría"
+                                                onClick={() =>
+                                                    moveCategory(
+                                                        category.id,
+                                                        -1,
+                                                    )
+                                                }
+                                            />
+                                            <IconButton
+                                                label="↓"
+                                                title="Bajar categoría"
+                                                onClick={() =>
+                                                    moveCategory(category.id, 1)
+                                                }
+                                            />
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                        <section className="min-w-0">
+                            {selectedCategory ? (
+                                <>
+                                    <div className="mb-3 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs font-black uppercase text-[#099aa5]">
+                                                Categoría seleccionada
+                                            </p>
+                                            <h3 className="text-xl font-black">
+                                                {selectedCategory.name}
+                                            </h3>
+                                        </div>
+                                        <span className="text-xs font-black text-[#2aad48]">
+                                            {categoryProducts.length} PRODUCTOS
+                                        </span>
+                                    </div>
+                                    <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
+                                        {categoryProducts.length ? (
+                                            categoryProducts.map(
+                                                (product, index) => (
+                                                    <div
+                                                        key={product.id}
+                                                        className="grid min-h-16 grid-cols-[18px_1fr_auto] items-center gap-2 rounded-lg border border-[#e6e2db] bg-white px-3 py-2 shadow-sm"
+                                                    >
+                                                        <span className="text-[#71808b]">
+                                                            ⋮⋮
+                                                        </span>
+                                                        <span className="min-w-0">
+                                                            <strong className="block truncate text-sm">
+                                                                {index + 1}.{" "}
+                                                                {product.name}
+                                                            </strong>
+                                                            <small className="block font-bold text-[#7c847f]">
+                                                                {product.sku ||
+                                                                    product.slug}
+                                                            </small>
+                                                        </span>
+                                                        <span className="flex gap-1">
+                                                            <IconButton
+                                                                label="↑"
+                                                                title="Subir producto"
+                                                                onClick={() =>
+                                                                    moveProduct(
+                                                                        product.id,
+                                                                        -1,
+                                                                    )
+                                                                }
+                                                            />
+                                                            <IconButton
+                                                                label="↓"
+                                                                title="Bajar producto"
+                                                                onClick={() =>
+                                                                    moveProduct(
+                                                                        product.id,
+                                                                        1,
+                                                                    )
+                                                                }
+                                                            />
+                                                            <IconButton
+                                                                label="×"
+                                                                title="Quitar de categoría"
+                                                                danger
+                                                                onClick={() =>
+                                                                    setCategoryMembership(
+                                                                        product,
+                                                                        false,
+                                                                    )
+                                                                }
+                                                            />
+                                                        </span>
+                                                    </div>
+                                                ),
+                                            )
+                                        ) : (
+                                            <Empty text="Categoría sin productos asignados" />
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <Empty text="Crea una categoría para organizar productos" />
+                            )}
+                        </section>
+                        <section className="min-w-0">
+                            <label className="mb-3 flex h-11 items-center gap-2 rounded-lg border border-[#dce2e3] px-3 text-sm">
+                                <span>⌕</span>
+                                <input
+                                    value={categorySearch}
+                                    onChange={(event) =>
+                                        setCategorySearch(event.target.value)
+                                    }
+                                    placeholder="Buscar para agregar o quitar"
+                                    className="w-full border-0 p-0 text-sm outline-none ring-0"
+                                />
+                            </label>
+                            <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
+                                {pickerProducts.map((product) => {
+                                    const included = product.categories.some(
+                                        (category) =>
+                                            category.id === selectedCategoryId,
+                                    );
+                                    return (
+                                        <label
+                                            key={product.id}
+                                            className={`grid min-h-14 grid-cols-[1fr_auto] items-center gap-3 rounded-lg border bg-white px-3 py-2 shadow-sm ${included ? "border-[#099aa5]/50" : "border-[#e6e2db]"}`}
+                                        >
+                                            <span className="min-w-0">
+                                                <strong className="block truncate text-sm">
+                                                    {product.name}
+                                                </strong>
+                                                <small className="block truncate font-bold text-[#7c847f]">
+                                                    {product.categories
+                                                        .map(
+                                                            (category) =>
+                                                                category.name,
+                                                        )
+                                                        .join(", ") ||
+                                                        "Sin categoría"}
+                                                </small>
+                                            </span>
+                                            <input
+                                                aria-label={`Asignar ${product.name}`}
+                                                type="checkbox"
+                                                checked={included}
+                                                onChange={(event) =>
+                                                    setCategoryMembership(
+                                                        product,
+                                                        event.target.checked,
+                                                    )
+                                                }
+                                                className="h-5 w-5 accent-[#099aa5]"
+                                            />
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    </div>
+                </section>
+                <section className="rounded-xl border border-[#e5dfd4] bg-white p-4">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <h2 className="text-lg font-black">Menú y productos</h2>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={exportProducts}
+                                className="rounded-lg bg-[#099aa5] px-4 py-2 text-xs font-black text-white"
+                            >
+                                ⇩　EXPORTAR
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowProductForm(true)}
+                                className="rounded-lg bg-[#099aa5] px-4 py-2 text-xs font-black text-white"
+                            >
+                                ＋　PRODUCTO
+                            </button>
+                        </div>
+                    </div>
+                    <div className="mb-3 grid gap-3 lg:grid-cols-[1fr_auto]">
+                        <label className="flex h-11 items-center gap-2 rounded-lg border border-[#dce2e3] px-3 text-sm">
+                            <span>⌕</span>
+                            <input
+                                value={query}
+                                onChange={(event) =>
+                                    setQuery(event.target.value)
+                                }
+                                placeholder="Buscar producto, SKU, categoría, sucursal o estado"
+                                className="w-full border-0 p-0 text-sm outline-none ring-0"
+                            />
+                        </label>
+                        <Form
+                            action={route("catalog.categories.store")}
+                            method="post"
+                            resetOnSuccess
+                            className="flex gap-2"
+                        >
+                            {({ errors, processing }) => (
+                                <>
+                                    <input
+                                        name="name"
+                                        required
+                                        placeholder="Nueva categoría"
+                                        className="min-w-44 rounded-lg border-[#dce2e3] text-sm"
+                                    />
+                                    <button
+                                        disabled={processing}
+                                        className="rounded-lg bg-[#099aa5] px-4 text-xs font-black text-white"
+                                    >
+                                        AGREGAR
+                                    </button>
+                                    {errors.name && (
+                                        <small className="text-red-600">
+                                            {errors.name}
+                                        </small>
+                                    )}
+                                </>
+                            )}
+                        </Form>
+                    </div>
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#fdfcf9] px-3 py-2 text-xs font-black text-[#687873]">
+                        <span>
+                            {filteredProducts.length} productos visibles con los
+                            filtros actuales
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setQuery("")}
+                            className="rounded-lg bg-[#fff8ec] px-3 py-2 text-[#099aa5]"
+                        >
+                            LIMPIAR FILTROS
+                        </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[860px] border-separate border-spacing-y-2 text-left text-sm">
+                            <thead className="text-xs font-black text-[#987e6b]">
+                                <tr>
+                                    <th className="px-3">PRODUCTO　›</th>
+                                    <th className="px-3">CATEGORÍAS　›</th>
+                                    <th className="px-3">PRECIO　›</th>
+                                    <th className="px-3">SUCURSAL　›</th>
+                                    <th className="px-3">ESTADO　›</th>
+                                    <th className="px-3">ACCIONES　›</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredProducts.map((product) => (
+                                    <tr
+                                        key={product.id}
+                                        className="bg-[#fdfdfd] shadow-sm"
+                                    >
+                                        <td className="rounded-l-lg px-3 py-3">
+                                            <div className="flex items-center gap-3">
+                                                <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-lg bg-[#fff8ec] text-lg">
+                                                    {product.image_path ? (
+                                                        <img
+                                                            src={
+                                                                product.image_path
+                                                            }
+                                                            alt=""
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        "☕"
+                                                    )}
+                                                </span>
+                                                <span>
+                                                    <strong className="block">
+                                                        {product.name}
+                                                    </strong>
+                                                    <small className="font-bold text-[#987e6b]">
+                                                        {product.sku ||
+                                                            product.slug}
+                                                    </small>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-3 font-bold">
+                                            {product.categories
+                                                .map(
+                                                    (category) => category.name,
+                                                )
+                                                .join(", ")}
+                                        </td>
+                                        <td className="px-3 font-black">
+                                            {money(product.base_price)}
+                                        </td>
+                                        <td className="px-3 font-bold">
+                                            {
+                                                product.branches.filter(
+                                                    (branch) =>
+                                                        branch.pivot
+                                                            ?.is_available,
+                                                ).length
+                                            }{" "}
+                                            activas
+                                        </td>
+                                        <td className="px-3">
+                                            <span
+                                                className={
+                                                    product.status === "active"
+                                                        ? "font-black text-[#2aad48]"
+                                                        : "font-black text-[#e6474f]"
+                                                }
+                                            >
+                                                {statusLabel(product.status)}
+                                            </span>
+                                        </td>
+                                        <td className="rounded-r-lg px-3">
+                                            <div className="flex gap-2">
+                                                <IconButton
+                                                    label="✎"
+                                                    title="Editar"
+                                                    onClick={() => {
+                                                        setEditingProduct(
+                                                            product,
+                                                        );
+                                                        setShowProductForm(
+                                                            true,
+                                                        );
+                                                    }}
+                                                />
+                                                <IconButton
+                                                    label="＋"
+                                                    title="Duplicar"
+                                                    onClick={() =>
+                                                        router.post(
+                                                            route(
+                                                                "catalog.products.duplicate",
+                                                                product.id,
+                                                            ),
+                                                            {},
+                                                            {
+                                                                preserveScroll: true,
+                                                            },
+                                                        )
+                                                    }
+                                                />
+                                                <IconButton
+                                                    label="♧"
+                                                    title="Eliminar"
+                                                    danger
+                                                    onClick={() => {
+                                                        if (
+                                                            window.confirm(
+                                                                `¿Desactivar ${product.name}?`,
+                                                            )
+                                                        )
+                                                            router.delete(
+                                                                route(
+                                                                    "catalog.products.destroy",
+                                                                    product.id,
+                                                                ),
+                                                                {
+                                                                    preserveScroll: true,
+                                                                },
+                                                            );
+                                                    }}
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+            {showProductForm && (
+                <ProductModal
+                    categories={categories}
+                    branches={branches}
+                    product={editingProduct}
+                    onClose={closeProductForm}
+                />
+            )}
+        </AuthenticatedLayout>
+    );
 }
 
-function ProductModal({ categories, branches, product, onClose }: { categories: Category[]; branches: Branch[]; product: Product | null; onClose: () => void }) {
-    const initial = product ? { name: product.name, short_name: product.short_name ?? '', description: product.description ?? '', commercial_description: product.commercial_description ?? '', category_id: String(product.category_id), category_ids: product.categories.map(category => category.id), base_price: product.base_price, promo_price: product.promo_price ?? '', estimated_cost: product.estimated_cost ?? '0', status: product.status, sku: product.sku ?? '', barcode: '', internal_code: '', image_path: product.image_path ?? '', estimated_prep_minutes: String(product.estimated_prep_minutes ?? 8), max_per_order: String(product.max_per_order ?? 12), branch_ids: product.branches.filter(branch => branch.pivot?.is_available).map(branch => branch.id) } : blankProduct(categories, branches);
+function ProductModal({
+    categories,
+    branches,
+    product,
+    onClose,
+}: {
+    categories: Category[];
+    branches: Branch[];
+    product: Product | null;
+    onClose: () => void;
+}) {
+    const initial = product
+        ? {
+              name: product.name,
+              short_name: product.short_name ?? "",
+              description: product.description ?? "",
+              commercial_description: product.commercial_description ?? "",
+              category_id: String(product.category_id),
+              category_ids: product.categories.map((category) => category.id),
+              base_price: product.base_price,
+              promo_price: product.promo_price ?? "",
+              estimated_cost: product.estimated_cost ?? "0",
+              status: product.status,
+              sku: product.sku ?? "",
+              barcode: "",
+              internal_code: "",
+              image_path: product.image_path ?? "",
+              tags: (product.tags ?? []).join(", "),
+              estimated_prep_minutes: String(
+                  product.estimated_prep_minutes ?? 8,
+              ),
+              max_per_order: String(product.max_per_order ?? 12),
+              branch_ids: product.branches
+                  .filter((branch) => branch.pivot?.is_available)
+                  .map((branch) => branch.id),
+          }
+        : blankProduct(categories, branches);
     const form = useForm<ProductForm>(initial);
-    const toggle = (field: 'category_ids' | 'branch_ids', id: number, checked: boolean) => form.setData(field, checked ? [...form.data[field], id] : form.data[field].filter(value => value !== id));
-    const submit = (event: FormEvent) => { event.preventDefault(); const options = { preserveScroll: true, onSuccess: onClose }; if (product) form.put(route('catalog.products.update', product.id), options); else form.post(route('catalog.products.store'), options); };
-    return <div className="fixed inset-0 z-50 overflow-y-auto bg-[#062947]/45 p-4"><div className="mx-auto my-8 max-w-3xl rounded-xl bg-white p-6 shadow-2xl"><div className="mb-5 flex justify-between"><div><p className="text-xs font-black text-[#099aa5]">PRODUCTOS Y MENÚ</p><h2 className="text-xl font-black">{product ? 'Editar producto' : 'Nuevo producto'}</h2></div><button type="button" onClick={onClose} className="text-2xl">×</button></div><form onSubmit={submit} className="grid gap-4 md:grid-cols-2"><Field label="Nombre" error={form.errors.name}><input value={form.data.name} onChange={event => form.setData('name', event.target.value)} required /></Field><Field label="Nombre corto"><input value={form.data.short_name} onChange={event => form.setData('short_name', event.target.value)} /></Field><Field label="Precio" error={form.errors.base_price}><input type="number" min="0" step="0.01" value={form.data.base_price} onChange={event => form.setData('base_price', event.target.value)} required /></Field><Field label="Precio promocional"><input type="number" min="0" step="0.01" value={form.data.promo_price} onChange={event => form.setData('promo_price', event.target.value)} /></Field><Field label="Categoría principal" error={form.errors.category_id}><select value={form.data.category_id} onChange={event => { const id = Number(event.target.value); form.setData(data => ({ ...data, category_id: event.target.value, category_ids: Array.from(new Set([id, ...data.category_ids])) })); }}>{categories.map(category => <option value={category.id} key={category.id}>{category.name}</option>)}</select></Field><Field label="Estado"><select value={form.data.status} onChange={event => form.setData('status', event.target.value)}><option value="active">Activo</option><option value="inactive">Inactivo</option><option value="sold_out">Agotado</option><option value="seasonal">Temporada</option></select></Field><Field label="SKU" error={form.errors.sku}><input value={form.data.sku} onChange={event => form.setData('sku', event.target.value)} /></Field><Field label="URL de imagen"><input type="url" value={form.data.image_path} onChange={event => form.setData('image_path', event.target.value)} placeholder="https://..." /></Field><Field label="Costo estimado"><input type="number" min="0" step="0.01" value={form.data.estimated_cost} onChange={event => form.setData('estimated_cost', event.target.value)} /></Field><Field label="Máximo por pedido"><input type="number" min="1" value={form.data.max_per_order} onChange={event => form.setData('max_per_order', event.target.value)} /></Field><Field label="Minutos de preparación"><input type="number" min="0" value={form.data.estimated_prep_minutes} onChange={event => form.setData('estimated_prep_minutes', event.target.value)} /></Field><Field label="Código interno"><input value={form.data.internal_code} onChange={event => form.setData('internal_code', event.target.value)} /></Field><Field label="Descripción" className="md:col-span-2"><textarea value={form.data.description} onChange={event => form.setData('description', event.target.value)} rows={3} /></Field><div className="md:col-span-2"><p className="mb-2 text-xs font-black text-[#687873]">CATEGORÍAS DEL PRODUCTO</p><div className="grid gap-2 sm:grid-cols-2">{categories.map(category => <label key={category.id} className="flex items-center gap-2 rounded-lg border p-2 text-sm font-bold"><input type="checkbox" checked={form.data.category_ids.includes(category.id)} onChange={event => toggle('category_ids', category.id, event.target.checked)} /> {category.name}</label>)}</div>{form.errors.category_ids && <small className="text-red-600">{form.errors.category_ids}</small>}</div><div className="md:col-span-2"><p className="mb-2 text-xs font-black text-[#687873]">DISPONIBILIDAD POR SUCURSAL</p><div className="grid gap-2 sm:grid-cols-2">{branches.map(branch => <label key={branch.id} className="flex items-center gap-2 rounded-lg border p-2 text-sm font-bold"><input type="checkbox" checked={form.data.branch_ids.includes(branch.id)} onChange={event => toggle('branch_ids', branch.id, event.target.checked)} /> {branch.name}</label>)}</div></div><div className="md:col-span-2 flex justify-end gap-2"><button type="button" onClick={onClose} className="rounded-lg border px-4 py-2 text-sm font-black">CANCELAR</button><button disabled={form.processing} className="rounded-lg bg-[#099aa5] px-5 py-2 text-sm font-black text-white">{form.processing ? 'GUARDANDO...' : 'GUARDAR PRODUCTO'}</button></div></form></div></div>;
+    const toggle = (
+        field: "category_ids" | "branch_ids",
+        id: number,
+        checked: boolean,
+    ) =>
+        form.setData(
+            field,
+            checked
+                ? [...form.data[field], id]
+                : form.data[field].filter((value) => value !== id),
+        );
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        const options = { preserveScroll: true, onSuccess: onClose };
+        if (product)
+            form.put(route("catalog.products.update", product.id), options);
+        else form.post(route("catalog.products.store"), options);
+    };
+    return (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#062947]/45 p-4">
+            <div className="mx-auto my-8 max-w-3xl rounded-xl bg-white p-6 shadow-2xl">
+                <div className="mb-5 flex justify-between">
+                    <div>
+                        <p className="text-xs font-black text-[#099aa5]">
+                            PRODUCTOS Y MENÚ
+                        </p>
+                        <h2 className="text-xl font-black">
+                            {product ? "Editar producto" : "Nuevo producto"}
+                        </h2>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-2xl"
+                    >
+                        ×
+                    </button>
+                </div>
+                <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
+                    <Field label="Nombre" error={form.errors.name}>
+                        <input
+                            value={form.data.name}
+                            onChange={(event) =>
+                                form.setData("name", event.target.value)
+                            }
+                            required
+                        />
+                    </Field>
+                    <Field label="Nombre corto">
+                        <input
+                            value={form.data.short_name}
+                            onChange={(event) =>
+                                form.setData("short_name", event.target.value)
+                            }
+                        />
+                    </Field>
+                    <Field label="Precio" error={form.errors.base_price}>
+                        <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={form.data.base_price}
+                            onChange={(event) =>
+                                form.setData("base_price", event.target.value)
+                            }
+                            required
+                        />
+                    </Field>
+                    <Field label="Precio promocional">
+                        <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={form.data.promo_price}
+                            onChange={(event) =>
+                                form.setData("promo_price", event.target.value)
+                            }
+                        />
+                    </Field>
+                    <Field
+                        label="Categoría principal"
+                        error={form.errors.category_id}
+                    >
+                        <select
+                            value={form.data.category_id}
+                            onChange={(event) => {
+                                const id = Number(event.target.value);
+                                form.setData((data) => ({
+                                    ...data,
+                                    category_id: event.target.value,
+                                    category_ids: Array.from(
+                                        new Set([id, ...data.category_ids]),
+                                    ),
+                                }));
+                            }}
+                        >
+                            {categories.map((category) => (
+                                <option value={category.id} key={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
+                    </Field>
+                    <Field label="Estado">
+                        <select
+                            value={form.data.status}
+                            onChange={(event) =>
+                                form.setData("status", event.target.value)
+                            }
+                        >
+                            <option value="active">Activo</option>
+                            <option value="inactive">Inactivo</option>
+                            <option value="sold_out">Agotado</option>
+                            <option value="seasonal">Temporada</option>
+                        </select>
+                    </Field>
+                    <Field label="SKU" error={form.errors.sku}>
+                        <input
+                            value={form.data.sku}
+                            onChange={(event) =>
+                                form.setData("sku", event.target.value)
+                            }
+                        />
+                    </Field>
+                    <Field label="URL de imagen">
+                        <input
+                            type="url"
+                            value={form.data.image_path}
+                            onChange={(event) =>
+                                form.setData("image_path", event.target.value)
+                            }
+                            placeholder="https://..."
+                        />
+                    </Field>
+                    <Field label="Etiquetas para filtros móviles">
+                        <input
+                            value={form.data.tags}
+                            onChange={(event) =>
+                                form.setData("tags", event.target.value)
+                            }
+                            placeholder="clasicos, especiales, sin-cafe"
+                        />
+                        <small className="font-normal text-[#687873]">
+                            Separa las etiquetas con comas. La app muestra solo
+                            las etiquetas que tengan productos disponibles.
+                        </small>
+                    </Field>
+                    <Field label="Costo estimado">
+                        <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={form.data.estimated_cost}
+                            onChange={(event) =>
+                                form.setData(
+                                    "estimated_cost",
+                                    event.target.value,
+                                )
+                            }
+                        />
+                    </Field>
+                    <Field label="Máximo por pedido">
+                        <input
+                            type="number"
+                            min="1"
+                            value={form.data.max_per_order}
+                            onChange={(event) =>
+                                form.setData(
+                                    "max_per_order",
+                                    event.target.value,
+                                )
+                            }
+                        />
+                    </Field>
+                    <Field label="Minutos de preparación">
+                        <input
+                            type="number"
+                            min="0"
+                            value={form.data.estimated_prep_minutes}
+                            onChange={(event) =>
+                                form.setData(
+                                    "estimated_prep_minutes",
+                                    event.target.value,
+                                )
+                            }
+                        />
+                    </Field>
+                    <Field label="Código interno">
+                        <input
+                            value={form.data.internal_code}
+                            onChange={(event) =>
+                                form.setData(
+                                    "internal_code",
+                                    event.target.value,
+                                )
+                            }
+                        />
+                    </Field>
+                    <Field label="Descripción" className="md:col-span-2">
+                        <textarea
+                            value={form.data.description}
+                            onChange={(event) =>
+                                form.setData("description", event.target.value)
+                            }
+                            rows={3}
+                        />
+                    </Field>
+                    <div className="md:col-span-2">
+                        <p className="mb-2 text-xs font-black text-[#687873]">
+                            CATEGORÍAS DEL PRODUCTO
+                        </p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            {categories.map((category) => (
+                                <label
+                                    key={category.id}
+                                    className="flex items-center gap-2 rounded-lg border p-2 text-sm font-bold"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={form.data.category_ids.includes(
+                                            category.id,
+                                        )}
+                                        onChange={(event) =>
+                                            toggle(
+                                                "category_ids",
+                                                category.id,
+                                                event.target.checked,
+                                            )
+                                        }
+                                    />{" "}
+                                    {category.name}
+                                </label>
+                            ))}
+                        </div>
+                        {form.errors.category_ids && (
+                            <small className="text-red-600">
+                                {form.errors.category_ids}
+                            </small>
+                        )}
+                    </div>
+                    <div className="md:col-span-2">
+                        <p className="mb-2 text-xs font-black text-[#687873]">
+                            DISPONIBILIDAD POR SUCURSAL
+                        </p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            {branches.map((branch) => (
+                                <label
+                                    key={branch.id}
+                                    className="flex items-center gap-2 rounded-lg border p-2 text-sm font-bold"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={form.data.branch_ids.includes(
+                                            branch.id,
+                                        )}
+                                        onChange={(event) =>
+                                            toggle(
+                                                "branch_ids",
+                                                branch.id,
+                                                event.target.checked,
+                                            )
+                                        }
+                                    />{" "}
+                                    {branch.name}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="md:col-span-2 flex justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-lg border px-4 py-2 text-sm font-black"
+                        >
+                            CANCELAR
+                        </button>
+                        <button
+                            disabled={form.processing}
+                            className="rounded-lg bg-[#099aa5] px-5 py-2 text-sm font-black text-white"
+                        >
+                            {form.processing
+                                ? "GUARDANDO..."
+                                : "GUARDAR PRODUCTO"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
 }
 
-function Field({ label, children, error, className = '' }: { label: string; children: ReactNode; error?: string; className?: string }) { return <label className={`grid gap-1 text-sm font-bold ${className}`}><span>{label}</span>{children}{error && <small className="text-red-600">{error}</small>}</label>; }
-function IconButton({ label, title, onClick, danger = false }: { label: string; title: string; onClick: () => void; danger?: boolean }) { return <button type="button" title={title} aria-label={title} onClick={onClick} className={`grid h-9 min-w-9 place-items-center rounded-lg border px-2 text-lg ${danger ? 'border-red-200 text-red-500' : 'border-[#dce2e3] text-[#062947]'}`}>{label}</button>; }
-function Empty({ text }: { text: string }) { return <div className="rounded-lg border border-dashed border-[#d8d5ce] p-8 text-center text-sm font-bold text-[#887e73]">⚠　{text}</div>; }
-function money(value: string): string { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 }).format(Number(value)); }
-function statusLabel(status: string): string { return ({ active: 'ACTIVO', inactive: 'INACTIVO', sold_out: 'AGOTADO', seasonal: 'TEMPORADA' } as Record<string, string>)[status] ?? status.toUpperCase(); }
+function Field({
+    label,
+    children,
+    error,
+    className = "",
+}: {
+    label: string;
+    children: ReactNode;
+    error?: string;
+    className?: string;
+}) {
+    return (
+        <label className={`grid gap-1 text-sm font-bold ${className}`}>
+            <span>{label}</span>
+            {children}
+            {error && <small className="text-red-600">{error}</small>}
+        </label>
+    );
+}
+function IconButton({
+    label,
+    title,
+    onClick,
+    danger = false,
+}: {
+    label: string;
+    title: string;
+    onClick: () => void;
+    danger?: boolean;
+}) {
+    return (
+        <button
+            type="button"
+            title={title}
+            aria-label={title}
+            onClick={onClick}
+            className={`grid h-9 min-w-9 place-items-center rounded-lg border px-2 text-lg ${danger ? "border-red-200 text-red-500" : "border-[#dce2e3] text-[#062947]"}`}
+        >
+            {label}
+        </button>
+    );
+}
+function Empty({ text }: { text: string }) {
+    return (
+        <div className="rounded-lg border border-dashed border-[#d8d5ce] p-8 text-center text-sm font-bold text-[#887e73]">
+            ⚠　{text}
+        </div>
+    );
+}
+function money(value: string): string {
+    return new Intl.NumberFormat("es-MX", {
+        style: "currency",
+        currency: "MXN",
+        maximumFractionDigits: 2,
+    }).format(Number(value));
+}
+function statusLabel(status: string): string {
+    return (
+        (
+            {
+                active: "ACTIVO",
+                inactive: "INACTIVO",
+                sold_out: "AGOTADO",
+                seasonal: "TEMPORADA",
+            } as Record<string, string>
+        )[status] ?? status.toUpperCase()
+    );
+}

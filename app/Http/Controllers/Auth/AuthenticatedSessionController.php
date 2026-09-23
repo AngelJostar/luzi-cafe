@@ -33,13 +33,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-<<<<<<< HEAD
         $redirectRoute = $request->user()->can('branches.view') ? 'dashboard' : 'profile.edit';
 
         return redirect()->intended(route($redirectRoute, absolute: false));
-=======
-        return redirect()->intended(route('dashboard', absolute: false));
->>>>>>> d5b831a0675ca0cc56a64701e194a719e3f5ebfd
     }
 
     /**

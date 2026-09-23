@@ -38,6 +38,7 @@ class UpdateProductRequest extends FormRequest
             'barcode' => ['nullable', 'string', 'max:80', Rule::unique('products', 'barcode')->ignore($this->route('product'))],
             'internal_code' => ['nullable', 'string', 'max:80', Rule::unique('products', 'internal_code')->ignore($this->route('product'))],
             'image_path' => ['nullable', 'string', 'max:2048'],
+            'tags' => ['nullable', 'string', 'max:500'],
             'estimated_prep_minutes' => ['nullable', 'integer', 'min:0', 'max:240'],
             'max_per_order' => ['nullable', 'integer', 'min:1', 'max:999'],
             'status' => ['required', 'in:active,inactive,sold_out,seasonal'],
